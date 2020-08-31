@@ -7,33 +7,41 @@ class attention2d(nn.Module):
     def __init__(self, in_planes, ratios, K):
         super(attention2d, self).__init__()
         self.avgpool = nn.AdaptiveAvgPool2d(1)
-        self.fc1 = nn.Conv2d(in_planes, K, 1)
-        self.fc2 = nn.Conv2d(K, K, 1)
+        if in_planes!=3:
+            hidden_planes = int(in_planes*ratios)
+        else:
+            hidden_planes = K
+        self.fc1 = nn.Conv2d(in_planes, hidden_planes, 1)
+        self.fc2 = nn.Conv2d(hidden_planes, K, 1)
 
     def forward(self, x):
         x = self.avgpool(x)
         x = self.fc1(x)
         x = F.relu(x)
         x = self.fc2(x).view(x.size(0), -1)
-        return F.softmax(x, 1)
+        return F.softmax(x/10, 1)
 
 class attention3d(nn.Module):
     def __init__(self, in_planes, ratios, K):
         super(attention3d, self).__init__()
         self.avgpool = nn.AdaptiveAvgPool3d(1)
-        self.fc1 = nn.Conv3d(in_planes, K, 1)
-        self.fc2 = nn.Conv3d(K, K, 1)
+        if in_planes != 3:
+            hidden_planes = int(in_planes * ratios)
+        else:
+            hidden_planes = K
+        self.fc1 = nn.Conv3d(in_planes, hidden_planes, 1)
+        self.fc2 = nn.Conv3d(hidden_planes, K, 1)
 
     def forward(self, x):
         x = self.avgpool(x)
         x = self.fc1(x)
         x = F.relu(x)
         x = self.fc2(x).view(x.size(0), -1)
-        return F.softmax(x, 1)
+        return F.softmax(x/10, 1)
 
 
 class Dynamic_conv2d(nn.Module):
-    def __init__(self, in_planes, out_planes, kernel_size, ratio, stride=1, padding=0, dilation=1, groups=1, bias=True, K=4):
+    def __init__(self, in_planes, out_planes, kernel_size, ratio=0.25, stride=1, padding=0, dilation=1, groups=1, bias=True, K=4):
         super(Dynamic_conv2d, self).__init__()
         assert in_planes%groups==0
         self.in_planes = in_planes
@@ -78,7 +86,7 @@ class Dynamic_conv2d(nn.Module):
 
 
 class Dynamic_conv3d(nn.Module):
-    def __init__(self, in_planes, out_planes, kernel_size, ratio, stride=1, padding=0, dilation=1, groups=1, bias=True, K=4):
+    def __init__(self, in_planes, out_planes, kernel_size, ratio=0.25, stride=1, padding=0, dilation=1, groups=1, bias=True, K=4):
         super(Dynamic_conv3d, self).__init__()
         assert in_planes%groups==0
         self.in_planes = in_planes
@@ -100,6 +108,7 @@ class Dynamic_conv3d(nn.Module):
 
 
         #TODO 初始化
+        nn.init.kaiming_uniform_(self.weight, )
 
 
     def forward(self, x):#将batch视作维度变量，进行组卷积，因为组卷积的权重是不同的，动态卷积的权重也是不同的
