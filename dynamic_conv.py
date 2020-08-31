@@ -4,16 +4,27 @@ import torch.nn.functional as F
 
 
 class attention2d(nn.Module):
-    def __init__(self, in_planes, ratios, K, temperature):
+    def __init__(self, in_planes, ratios, K, temperature, init_weight=True):
         super(attention2d, self).__init__()
+        assert temperature%3==1
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         if in_planes!=3:
             hidden_planes = int(in_planes*ratios)
         else:
             hidden_planes = K
-        self.fc1 = nn.Conv2d(in_planes, hidden_planes, 1)
-        self.fc2 = nn.Conv2d(hidden_planes, K, 1)
+        self.fc1 = nn.Conv2d(in_planes, hidden_planes, 1, bias=False)
+        self.fc2 = nn.Conv2d(hidden_planes, K, 1, bias=False)
         self.temperature = temperature
+        if init_weight:
+            self._initialize_weights()
+
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
 
     def updata_temperature(self):
         if self.temperature!=1:
@@ -26,36 +37,11 @@ class attention2d(nn.Module):
         x = self.fc1(x)
         x = F.relu(x)
         x = self.fc2(x).view(x.size(0), -1)
-
         return F.softmax(x/self.temperature, 1)
-
-class attention3d(nn.Module):
-    def __init__(self, in_planes, ratios, K, temperature):
-        super(attention3d, self).__init__()
-        self.avgpool = nn.AdaptiveAvgPool3d(1)
-        if in_planes != 3:
-            hidden_planes = int(in_planes * ratios)
-        else:
-            hidden_planes = K
-        self.fc1 = nn.Conv3d(in_planes, hidden_planes, 1)
-        self.fc2 = nn.Conv3d(hidden_planes, K, 1)
-        self.temperature = temperature
-
-    def updata_temperature(self):
-        if self.temperature!=1:
-            self.temperature -=3
-            print('Change temperature to:', str(self.temperature))
-
-    def forward(self, x):
-        x = self.avgpool(x)
-        x = self.fc1(x)
-        x = F.relu(x)
-        x = self.fc2(x).view(x.size(0), -1)
-        return F.softmax(x / self.temperature, 1)
 
 
 class Dynamic_conv2d(nn.Module):
-    def __init__(self, in_planes, out_planes, kernel_size, ratio=0.25, stride=1, padding=0, dilation=1, groups=1, bias=True, K=4,temperature=34):
+    def __init__(self, in_planes, out_planes, kernel_size, ratio=0.25, stride=1, padding=0, dilation=1, groups=1, bias=True, K=4,temperature=34, init_weight=True):
         super(Dynamic_conv2d, self).__init__()
         assert in_planes%groups==0
         self.in_planes = in_planes
@@ -74,8 +60,14 @@ class Dynamic_conv2d(nn.Module):
             self.bias = nn.Parameter(torch.Tensor(K, out_planes))
         else:
             self.bias = None
+        if init_weight:
+            self._initialize_weights()
 
         #TODO 初始化
+    def _initialize_weights(self):
+        for i in range(self.K):
+            nn.init.kaiming_uniform_(self.weight[i])
+
 
     def update_temperature(self):
         self.attention.updata_temperature()
@@ -100,6 +92,31 @@ class Dynamic_conv2d(nn.Module):
         return output
 
 
+class attention3d(nn.Module):
+    def __init__(self, in_planes, ratios, K, temperature):
+        super(attention3d, self).__init__()
+        assert temperature%3==1
+        self.avgpool = nn.AdaptiveAvgPool3d(1)
+        if in_planes != 3:
+            hidden_planes = int(in_planes * ratios)
+        else:
+            hidden_planes = K
+        self.fc1 = nn.Conv3d(in_planes, hidden_planes, 1, bias=False)
+        self.fc2 = nn.Conv3d(hidden_planes, K, 1, bias=False)
+        self.temperature = temperature
+
+    def updata_temperature(self):
+        if self.temperature!=1:
+            self.temperature -=3
+            print('Change temperature to:', str(self.temperature))
+
+    def forward(self, x):
+        x = self.avgpool(x)
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x).view(x.size(0), -1)
+        return F.softmax(x / self.temperature, 1)
+
 class Dynamic_conv3d(nn.Module):
     def __init__(self, in_planes, out_planes, kernel_size, ratio=0.25, stride=1, padding=0, dilation=1, groups=1, bias=True, K=4, temperature=34):
         super(Dynamic_conv3d, self).__init__()
@@ -123,7 +140,7 @@ class Dynamic_conv3d(nn.Module):
 
 
         #TODO 初始化
-        nn.init.kaiming_uniform_(self.weight, )
+        # nn.init.kaiming_uniform_(self.weight, )
 
     def update_temperature(self):
         self.attention.updata_temperature()
@@ -150,7 +167,7 @@ class Dynamic_conv3d(nn.Module):
 
 if __name__ == '__main__':
     x = torch.randn(24, 3,  80, 80)
-    model = Dynamic_conv2d(in_planes=3, out_planes=64, kernel_size=3, ratio=0.25, padding=1)
+    model = Dynamic_conv2d(in_planes=3, out_planes=64, kernel_size=3, ratio=0.25, padding=1, temperature=5)
     x = x.to('cuda:0')
     model.to('cuda')
     # model.attention.cuda()
