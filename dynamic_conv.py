@@ -167,7 +167,7 @@ class Dynamic_conv3d(nn.Module):
 
 if __name__ == '__main__':
     x = torch.randn(24, 3,  80, 80)
-    model = Dynamic_conv2d(in_planes=3, out_planes=64, kernel_size=3, ratio=0.25, padding=1, temperature=5)
+    model = Dynamic_conv2d(in_planes=3, out_planes=64, kernel_size=3, ratio=0.25, padding=1,)
     x = x.to('cuda:0')
     model.to('cuda')
     # model.attention.cuda()
