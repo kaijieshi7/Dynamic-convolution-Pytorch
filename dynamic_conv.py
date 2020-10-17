@@ -13,7 +13,8 @@ class attention2d(nn.Module):
         else:
             hidden_planes = K
         self.fc1 = nn.Conv2d(in_planes, hidden_planes, 1, bias=False)
-        self.fc2 = nn.Conv2d(hidden_planes, K, 1, bias=False)
+        # self.bn = nn.BatchNorm2d(hidden_planes)
+        self.fc2 = nn.Conv2d(hidden_planes, K, 1, bias=True)
         self.temperature = temperature
         if init_weight:
             self._initialize_weights()
@@ -25,6 +26,9 @@ class attention2d(nn.Module):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
+            if isinstance(m ,nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
 
     def updata_temperature(self):
         if self.temperature!=1:
@@ -55,7 +59,7 @@ class Dynamic_conv2d(nn.Module):
         self.K = K
         self.attention = attention2d(in_planes, ratio, K, temperature)
 
-        self.weight = nn.Parameter(torch.Tensor(K, out_planes, in_planes//groups, kernel_size, kernel_size), requires_grad=True)
+        self.weight = nn.Parameter(torch.randn(K, out_planes, in_planes//groups, kernel_size, kernel_size), requires_grad=True)
         if bias:
             self.bias = nn.Parameter(torch.Tensor(K, out_planes))
         else:
