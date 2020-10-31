@@ -9,7 +9,7 @@ class attention2d(nn.Module):
         assert temperature%3==1
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         if in_planes!=3:
-            hidden_planes = int(in_planes*ratios)
+            hidden_planes = int(in_planes*ratios)+1
         else:
             hidden_planes = K
         self.fc1 = nn.Conv2d(in_planes, hidden_planes, 1, bias=False)
@@ -102,7 +102,7 @@ class attention3d(nn.Module):
         assert temperature%3==1
         self.avgpool = nn.AdaptiveAvgPool3d(1)
         if in_planes != 3:
-            hidden_planes = int(in_planes * ratios)
+            hidden_planes = int(in_planes * ratios)+1
         else:
             hidden_planes = K
         self.fc1 = nn.Conv3d(in_planes, hidden_planes, 1, bias=False)
@@ -136,7 +136,7 @@ class Dynamic_conv3d(nn.Module):
         self.K = K
         self.attention = attention3d(in_planes, ratio, K, temperature)
 
-        self.weight = nn.Parameter(torch.Tensor(K, out_planes, in_planes//groups, kernel_size, kernel_size, kernel_size), requires_grad=True)
+        self.weight = nn.Parameter(torch.randn(K, out_planes, in_planes//groups, kernel_size, kernel_size, kernel_size), requires_grad=True)
         if bias:
             self.bias = nn.Parameter(torch.Tensor(K, out_planes))
         else:
