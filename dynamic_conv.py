@@ -83,7 +83,7 @@ class Dynamic_conv1d(nn.Module):
         weight = self.weight.view(self.K, -1)
 
         # 动态卷积的权重的生成， 生成的是batch_size个卷积参数（每个参数不同）
-        aggregate_weight = torch.mm(softmax_attention, weight).view(-1, self.in_planes, self.kernel_size,)
+        aggregate_weight = torch.mm(softmax_attention, weight).view(batch_size*self.out_planes, self.in_planes//self.groups, self.kernel_size,)
         if self.bias is not None:
             aggregate_bias = torch.mm(softmax_attention, self.bias).view(-1)
             output = F.conv1d(x, weight=aggregate_weight, bias=aggregate_bias, stride=self.stride, padding=self.padding,
@@ -177,7 +177,7 @@ class Dynamic_conv2d(nn.Module):
         weight = self.weight.view(self.K, -1)
 
         # 动态卷积的权重的生成， 生成的是batch_size个卷积参数（每个参数不同）
-        aggregate_weight = torch.mm(softmax_attention, weight).view(-1, self.in_planes, self.kernel_size, self.kernel_size)
+        aggregate_weight = torch.mm(softmax_attention, weight).view(batch_size*self.out_planes, self.in_planes//self.groups, self.kernel_size, self.kernel_size)
         if self.bias is not None:
             aggregate_bias = torch.mm(softmax_attention, self.bias).view(-1)
             output = F.conv2d(x, weight=aggregate_weight, bias=aggregate_bias, stride=self.stride, padding=self.padding,
@@ -250,7 +250,7 @@ class Dynamic_conv3d(nn.Module):
         weight = self.weight.view(self.K, -1)
 
         # 动态卷积的权重的生成， 生成的是batch_size个卷积参数（每个参数不同）
-        aggregate_weight = torch.mm(softmax_attention, weight).view(-1, self.in_planes, self.kernel_size, self.kernel_size, self.kernel_size)
+        aggregate_weight = torch.mm(softmax_attention, weight).view(batch_size*self.out_planes, self.in_planes//self.groups, self.kernel_size, self.kernel_size, self.kernel_size)
         if self.bias is not None:
             aggregate_bias = torch.mm(softmax_attention, self.bias).view(-1)
             output = F.conv3d(x, weight=aggregate_weight, bias=aggregate_bias, stride=self.stride, padding=self.padding,
