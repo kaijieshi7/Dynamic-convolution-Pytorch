@@ -61,7 +61,7 @@ class Dynamic_conv1d(nn.Module):
 
         self.weight = nn.Parameter(torch.randn(K, out_planes, in_planes//groups, kernel_size), requires_grad=True)
         if bias:
-            self.bias = nn.Parameter(torch.Tensor(K, out_planes))
+            self.bias = nn.Parameter(torch.zeros(K, out_planes))
         else:
             self.bias = None
         if init_weight:
@@ -155,7 +155,7 @@ class Dynamic_conv2d(nn.Module):
 
         self.weight = nn.Parameter(torch.randn(K, out_planes, in_planes//groups, kernel_size, kernel_size), requires_grad=True)
         if bias:
-            self.bias = nn.Parameter(torch.Tensor(K, out_planes))
+            self.bias = nn.Parameter(torch.zeros(K, out_planes))
         else:
             self.bias = None
         if init_weight:
@@ -232,7 +232,7 @@ class Dynamic_conv3d(nn.Module):
 
         self.weight = nn.Parameter(torch.randn(K, out_planes, in_planes//groups, kernel_size, kernel_size, kernel_size), requires_grad=True)
         if bias:
-            self.bias = nn.Parameter(torch.Tensor(K, out_planes))
+            self.bias = nn.Parameter(torch.zeros(K, out_planes))
         else:
             self.bias = None
 
